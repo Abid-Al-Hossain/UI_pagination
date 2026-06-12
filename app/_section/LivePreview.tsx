@@ -69,6 +69,7 @@ export default function LivePreview({ state }: { state: PaginationState }) {
     color: selected ? state.background : state.foreground,
     fontWeight: selected ? 800 : state.fontWeight,
     opacity: disabled ? 0.45 : 1,
+    transition: state.motion ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
   });
 
   return (
