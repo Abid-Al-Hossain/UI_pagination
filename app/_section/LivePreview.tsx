@@ -1,6 +1,6 @@
 "use client";
 
-import type { CSSProperties } from "react";
+import { useState, type CSSProperties } from "react";
 import type { PaginationState } from "../types";
 import { SYSTEM_FONTS } from "@/components/shared/typography/fontConstants";
 
@@ -28,9 +28,9 @@ function shell(state: PaginationState): CSSProperties {
     minHeight: state.height,
     padding: state.padding,
     borderRadius: buildRadius(state),
-    border: `${state.borderWidth}px ${state.borderStyle} ${state.border}`,
+    border: `${state.borderWidth}px ${state.borderStyle} ${state.disabled && state.disabledUseCustomColors ? state.disabledBorder : state.border}`,
     boxShadow: buildShadow(state),
-    background: state.background,
+    background: state.disabled && state.disabledUseCustomColors ? state.disabledBg : state.background,
     color: state.foreground,
     fontFamily: resolveFont(state),
     fontStyle: state.fontStyle,
@@ -83,15 +83,29 @@ export default function LivePreview({ state }: { state: PaginationState }) {
   const isNextDisabled = state.disabled || currentPage >= totalPages;
   const panel = shell(state);
 
-  const buttonStyle = (selected = false, disabled = false): CSSProperties => ({
-    minWidth: 40,
-    height: 40,
+  const [hoverKey, setHoverKey] = useState("");
+  const pageRadius = state.pageShape === "pill" ? 999 : state.pageShape === "square" ? 4 : Math.max(state.radius - 8, 8);
+  const buttonStyle = (selected = false, disabled = false, hovered = false): CSSProperties => ({
+    minWidth: state.pageSize,
+    height: state.pageSize,
     padding: "0 12px",
-    borderRadius: Math.max(state.radius - 8, 8),
-    border: `${state.borderWidth}px solid ${selected ? state.accent : state.border}`,
-    background: selected ? state.accent : "transparent",
-    color: selected ? state.background : state.foreground,
+    borderRadius: pageRadius,
+    border: `${state.borderWidth}px solid ${selected ? state.activeBorder : hovered ? state.hoverBorder : state.inactiveBorder}`,
+    background: selected ? state.activeBg : hovered ? state.hoverBg : state.inactiveBg,
+    color: selected ? state.activeText : hovered ? state.hoverText : state.inactiveText,
     fontWeight: selected ? 800 : state.fontWeight,
+    opacity: disabled ? 0.45 : 1,
+    transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
+  });
+  const navStyle = (disabled: boolean, hovered: boolean): CSSProperties => ({
+    minWidth: state.pageSize,
+    height: state.pageSize,
+    padding: "0 12px",
+    borderRadius: pageRadius,
+    border: `${state.borderWidth}px solid ${hovered && !disabled ? state.hoverBorder : state.inactiveBorder}`,
+    background: hovered && !disabled ? state.hoverBg : state.inactiveBg,
+    color: disabled ? state.navIconDisabledColor : hovered ? state.navIconHoverColor : state.navIconColor,
+    fontWeight: state.fontWeight,
     opacity: disabled ? 0.45 : 1,
     transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
   });
@@ -108,41 +122,59 @@ export default function LivePreview({ state }: { state: PaginationState }) {
     >
       <h3 style={{ fontSize: state.titleSize, fontWeight: state.fontWeight }}>{state.title}</h3>
       <p style={{ color: state.muted, fontSize: state.bodySize }}>{state.description}</p>
-      <div className="mt-5 flex flex-wrap items-center" style={{ gap: state.gap }} aria-label={`${state.label}: page ${currentPage} of ${totalPages}`}>
+      <div className="mt-5 flex flex-wrap items-center" style={{ gap: state.pageGap }} aria-label={`${state.label}: page ${currentPage} of ${totalPages}`}>
         {state.showFirstLast && (
-          <button type="button" aria-label="Go to first page" disabled={isPreviousDisabled} style={buttonStyle(false, isPreviousDisabled)}>
+          <button type="button" aria-label="Go to first page" disabled={isPreviousDisabled} onMouseEnter={() => setHoverKey("first")} onMouseLeave={() => setHoverKey("")} style={navStyle(isPreviousDisabled, hoverKey === "first")}>
             First
           </button>
         )}
         {state.showPrevNext && (
-          <button type="button" aria-label="Go to previous page" disabled={isPreviousDisabled} style={buttonStyle(false, isPreviousDisabled)}>
+          <button type="button" aria-label="Go to previous page" disabled={isPreviousDisabled} onMouseEnter={() => setHoverKey("prev")} onMouseLeave={() => setHoverKey("")} style={navStyle(isPreviousDisabled, hoverKey === "prev")}>
             Previous
           </button>
         )}
         {visiblePages(state).map((page) =>
           typeof page === "number" ? (
-            <button key={page} type="button" aria-label={`Go to page ${page}`} aria-current={page === currentPage ? "page" : undefined} disabled={state.disabled} style={buttonStyle(page === currentPage, state.disabled)}>
+            <button key={page} type="button" aria-label={`Go to page ${page}`} aria-current={page === currentPage ? "page" : undefined} disabled={state.disabled} onMouseEnter={() => setHoverKey(`p${page}`)} onMouseLeave={() => setHoverKey("")} style={buttonStyle(page === currentPage, state.disabled, hoverKey === `p${page}` && page !== currentPage)}>
               {page}
             </button>
           ) : (
-            <span key={page} aria-hidden="true" style={{ color: state.muted }}>
+            <span key={page} aria-hidden="true" style={{ color: state.ellipsisColor }}>
               ...
             </span>
           ),
         )}
         {state.showPrevNext && (
-          <button type="button" aria-label="Go to next page" disabled={isNextDisabled} style={buttonStyle(false, isNextDisabled)}>
+          <button type="button" aria-label="Go to next page" disabled={isNextDisabled} onMouseEnter={() => setHoverKey("next")} onMouseLeave={() => setHoverKey("")} style={navStyle(isNextDisabled, hoverKey === "next")}>
             Next
           </button>
         )}
         {state.showFirstLast && (
-          <button type="button" aria-label="Go to last page" disabled={isNextDisabled} style={buttonStyle(false, isNextDisabled)}>
+          <button type="button" aria-label="Go to last page" disabled={isNextDisabled} onMouseEnter={() => setHoverKey("last")} onMouseLeave={() => setHoverKey("")} style={navStyle(isNextDisabled, hoverKey === "last")}>
             Last
           </button>
         )}
       </div>
-      <p className="mt-4 text-xs" style={{ color: state.muted }}>
-        {state.helper} Page {currentPage} of {totalPages}.
+      {(state.jumpToEnabled || state.perPageEnabled) && (
+        <div className="mt-4 flex flex-wrap items-center gap-4 text-sm">
+          {state.jumpToEnabled && (
+            <label className="flex items-center gap-2" style={{ color: state.muted }}>
+              {state.jumpToLabel}
+              <input type="number" min={1} max={totalPages} defaultValue={currentPage} disabled={state.disabled} style={{ width: 64, height: 36, borderRadius: 10, padding: "0 8px", background: state.jumpToBg, border: `1px solid ${state.jumpToBorder}`, color: state.foreground }} />
+            </label>
+          )}
+          {state.perPageEnabled && (
+            <label className="flex items-center gap-2" style={{ color: state.muted }}>
+              Per page
+              <select disabled={state.disabled} style={{ height: 36, borderRadius: 10, padding: "0 8px", background: state.jumpToBg, border: `1px solid ${state.jumpToBorder}`, color: state.foreground }}>
+                {state.perPageOptions.split(",").map((opt) => <option key={opt.trim()} value={opt.trim()}>{opt.trim()}</option>)}
+              </select>
+            </label>
+          )}
+        </div>
+      )}
+      <p className="mt-4 text-xs" style={{ color: state.totalColor }}>
+        {state.totalText.replace("{page}", String(currentPage)).replace("{total}", String(totalPages))}
       </p>
     </nav>
   );

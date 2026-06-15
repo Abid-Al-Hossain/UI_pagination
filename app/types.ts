@@ -1,4 +1,4 @@
-export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "accessibility";
+export type SectionId = "presets" | "basics" | "metadata" | "content" | "items" | "behavior" | "layout" | "placement" | "sizing" | "colors" | "border" | "radius" | "shadow" | "typography" | "transitions" | "focus-ring" | "states" | "disabled" | "accessibility";
 
 export type PaginationState = {
   title: string;
@@ -54,11 +54,25 @@ export type PaginationState = {
   muted: string;
   accent: string;
   border: string;
+  activeBg: string;
+  activeText: string;
+  activeBorder: string;
+  inactiveBg: string;
+  inactiveText: string;
+  inactiveBorder: string;
+  ellipsisColor: string;
+  pageShape: "rounded" | "pill" | "square";
   titleSize: number;
   bodySize: number;
   fontWeight: number;
   previewState: "default" | "hover" | "focus" | "active" | "open" | "closed" | "selected" | "loading" | "empty" | "error" | "success";
   disabled: boolean;
+  disabledOpacity: number;
+  disabledCursor: "not-allowed" | "default" | "pointer";
+  disabledUseCustomColors: boolean;
+  disabledBg: string;
+  disabledText: string;
+  disabledBorder: string;
   role: "navigation";
   pageCount: number;
   currentPage: number;
@@ -66,6 +80,28 @@ export type PaginationState = {
   boundaryCount: number;
   showFirstLast: boolean;
   showPrevNext: boolean;
+  // Hover state
+  hoverBg: string;
+  hoverText: string;
+  hoverBorder: string;
+  // Nav buttons
+  navIconColor: string;
+  navIconHoverColor: string;
+  navIconDisabledColor: string;
+  // Geometry
+  pageSize: number;
+  pageGap: number;
+  // Jump to page
+  jumpToEnabled: boolean;
+  jumpToLabel: string;
+  jumpToBg: string;
+  jumpToBorder: string;
+  // Per page
+  perPageEnabled: boolean;
+  perPageOptions: string;
+  // Total summary
+  totalText: string;
+  totalColor: string;
 };
 
 export type StudioPreset = { id: string; family: string; archetype: string; variant: string; size: string; tags: string[]; state: Partial<PaginationState> & Record<string, unknown> };
@@ -138,6 +174,10 @@ export const SECTIONS: Array<{ id: SectionId; label: string }> = [
   {
     "id": "states",
     "label": "State Preview"
+  },
+  {
+    "id": "disabled",
+    "label": "Disabled"
   },
   {
     "id": "accessibility",
