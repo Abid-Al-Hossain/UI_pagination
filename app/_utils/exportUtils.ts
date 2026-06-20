@@ -1,4 +1,5 @@
 import type { PaginationState } from "../types";
+import { ensureReadable, solidBg } from "@/components/shared/color/wcag";
 
 export type ExportPayload = { fileName: string; mimeType: "text/plain;charset=utf-8"; content: string };
 
@@ -6,7 +7,20 @@ export function buildExportPayload(state: PaginationState, fileName = "paginatio
   return { fileName: `${fileName || "pagination"}.jsx`, mimeType: "text/plain;charset=utf-8", content: buildReactCode(state) };
 }
 
-export function buildReactCode(state: PaginationState) {
+// Keep the exported colors WCAG-readable, matching the live preview's enforcement.
+function enforceContrast(s: PaginationState): PaginationState {
+  return {
+    ...s,
+    inactiveText: ensureReadable(s.inactiveText, solidBg(s.inactiveBg, s.background)),
+    activeText: ensureReadable(s.activeText, solidBg(s.activeBg, s.background)),
+    hoverText: ensureReadable(s.hoverText, solidBg(s.hoverBg, s.background)),
+    navIconColor: ensureReadable(s.navIconColor, solidBg(s.inactiveBg, s.background)),
+    navIconHoverColor: ensureReadable(s.navIconHoverColor, solidBg(s.hoverBg, s.background)),
+  };
+}
+
+export function buildReactCode(stateInput: PaginationState) {
+  const state = enforceContrast(stateInput);
   const pageRadius = state.pageShape === "pill" ? 999 : state.pageShape === "square" ? 4 : Math.max(state.radius - 8, 8);
   return [
     "import * as React from \"react\";",

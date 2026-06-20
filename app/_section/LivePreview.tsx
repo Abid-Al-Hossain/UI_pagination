@@ -3,6 +3,7 @@
 import { useState, type CSSProperties } from "react";
 import type { PaginationState } from "../types";
 import { SYSTEM_FONTS } from "@/components/shared/typography/fontConstants";
+import { ensureReadable, solidBg } from "@/components/shared/color/wcag";
 
 function resolveFont(state: { fontBucket: "system" | "google"; googleFontFamily: string; systemFontIdx: number }): string {
   return state.fontBucket === "google"
@@ -85,30 +86,38 @@ export default function LivePreview({ state }: { state: PaginationState }) {
 
   const [hoverKey, setHoverKey] = useState("");
   const pageRadius = state.pageShape === "pill" ? 999 : state.pageShape === "square" ? 4 : Math.max(state.radius - 8, 8);
-  const buttonStyle = (selected = false, disabled = false, hovered = false): CSSProperties => ({
-    minWidth: state.pageSize,
-    height: state.pageSize,
-    padding: "0 12px",
-    borderRadius: pageRadius,
-    border: `${state.borderWidth}px solid ${selected ? state.activeBorder : hovered ? state.hoverBorder : state.inactiveBorder}`,
-    background: selected ? state.activeBg : hovered ? state.hoverBg : state.inactiveBg,
-    color: selected ? state.activeText : hovered ? state.hoverText : state.inactiveText,
-    fontWeight: selected ? 800 : state.fontWeight,
-    opacity: disabled ? 0.45 : 1,
-    transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
-  });
-  const navStyle = (disabled: boolean, hovered: boolean): CSSProperties => ({
-    minWidth: state.pageSize,
-    height: state.pageSize,
-    padding: "0 12px",
-    borderRadius: pageRadius,
-    border: `${state.borderWidth}px solid ${hovered && !disabled ? state.hoverBorder : state.inactiveBorder}`,
-    background: hovered && !disabled ? state.hoverBg : state.inactiveBg,
-    color: disabled ? state.navIconDisabledColor : hovered ? state.navIconHoverColor : state.navIconColor,
-    fontWeight: state.fontWeight,
-    opacity: disabled ? 0.45 : 1,
-    transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
-  });
+  const buttonStyle = (selected = false, disabled = false, hovered = false): CSSProperties => {
+    const bg = selected ? state.activeBg : hovered ? state.hoverBg : state.inactiveBg;
+    const fg = selected ? state.activeText : hovered ? state.hoverText : state.inactiveText;
+    return {
+      minWidth: state.pageSize,
+      height: state.pageSize,
+      padding: "0 12px",
+      borderRadius: pageRadius,
+      border: `${state.borderWidth}px solid ${selected ? state.activeBorder : hovered ? state.hoverBorder : state.inactiveBorder}`,
+      background: bg,
+      color: ensureReadable(fg, solidBg(bg, state.background)),
+      fontWeight: selected ? 800 : state.fontWeight,
+      opacity: disabled ? 0.45 : 1,
+      transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
+    };
+  };
+  const navStyle = (disabled: boolean, hovered: boolean): CSSProperties => {
+    const bg = hovered && !disabled ? state.hoverBg : state.inactiveBg;
+    const fg = disabled ? state.navIconDisabledColor : hovered ? state.navIconHoverColor : state.navIconColor;
+    return {
+      minWidth: state.pageSize,
+      height: state.pageSize,
+      padding: "0 12px",
+      borderRadius: pageRadius,
+      border: `${state.borderWidth}px solid ${hovered && !disabled ? state.hoverBorder : state.inactiveBorder}`,
+      background: bg,
+      color: ensureReadable(fg, solidBg(bg, state.background)),
+      fontWeight: state.fontWeight,
+      opacity: disabled ? 0.45 : 1,
+      transition: state.transitionDuration > 0 ? "background 0.2s ease, color 0.2s ease, border-color 0.2s ease, opacity 0.2s ease" : "none",
+    };
+  };
 
   return (
     <nav
